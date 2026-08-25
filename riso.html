@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Riso — Weather</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stock:#EAE2D0;
+    --card:#F4EFE2;
+    --ink:#1A1A17;
+    --ink-dim:#6b6558;
+    --blue:#123FEB;
+    --pink:#F72D95;
+    --sans:'Space Grotesk',system-ui,-apple-system,sans-serif;
+    --display:'Archivo Black','Space Grotesk',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--stock);color:var(--ink);font-family:var(--sans);}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important;}
+  }
+  button,input,select{font-family:inherit;}
+  :focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
+  #grain{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50;opacity:0.7;}
+
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px 72px;position:relative;}
+
+  header.top{
+    display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
+    padding:22px 0;border-bottom:3px solid var(--ink);
+  }
+  .brand{font-family:var(--display);font-size:20px;letter-spacing:.01em;}
+  .brand span{color:var(--pink);}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex:1 1 380px;justify-content:flex-end;}
+  .search-wrap{position:relative;flex:1 1 200px;max-width:300px;}
+  #searchInput{
+    width:100%;padding:11px 12px;border:2.5px solid var(--ink);background:var(--card);color:var(--ink);
+    font-family:var(--sans);font-weight:500;font-size:14.5px;
+  }
+  #searchInput::placeholder{color:var(--ink-dim);}
+  .search-results{
+    list-style:none;margin:4px 0 0;padding:0;position:absolute;top:100%;left:0;right:0;
+    background:var(--card);border:2.5px solid var(--ink);max-height:300px;overflow-y:auto;z-index:60;
+  }
+  .search-results li{padding:10px 12px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--ink);}
+  .search-results li:last-child{border-bottom:none;}
+  .search-results li.sr-empty{color:var(--ink-dim);cursor:default;}
+  .search-results li.active,.search-results li:hover:not(.sr-empty){background:var(--pink);color:#fff;}
+  .btn{
+    border:2.5px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer;
+    height:42px;padding:0 14px;font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:6px;
+  }
+  .btn:hover{background:var(--ink);color:var(--card);}
+  .btn svg{width:17px;height:17px;}
+  .seg{display:flex;border:2.5px solid var(--ink);}
+  .seg button{border:none;background:var(--card);color:var(--ink);height:42px;padding:0 13px;font-weight:600;font-size:13.5px;cursor:pointer;border-right:2.5px solid var(--ink);}
+  .seg button:last-child{border-right:none;}
+  .seg button.on{background:var(--blue);color:#fff;}
+  select#windUnit{height:42px;border:2.5px solid var(--ink);background:var(--card);color:var(--ink);font-weight:600;font-size:13px;padding:0 8px;}
+
+  .favorites-strip{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0;}
+  .fav-chip{border:2px solid var(--ink);background:var(--card);padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .fav-chip.current{background:var(--blue);color:#fff;}
+
+  .banner{border:2.5px solid var(--pink);background:var(--card);color:var(--ink);padding:11px 14px;margin:16px 0 0;display:flex;justify-content:space-between;gap:12px;font-size:13.5px;font-weight:500;align-items:center;}
+  .banner[hidden]{display:none;}
+  .banner button{background:none;border:none;color:var(--ink);font-size:18px;cursor:pointer;}
+
+  .poster{
+    position:relative;margin-top:28px;border:3px solid var(--ink);background:var(--card);
+    padding:36px 24px 28px;text-align:center;overflow:hidden;
+  }
+  .poster-place{font-family:var(--display);font-size:clamp(26px,5vw,46px);line-height:1.05;text-transform:uppercase;margin:0;position:relative;z-index:2;}
+  .poster-sub{font-size:15px;font-weight:600;color:var(--ink-dim);margin-top:8px;text-transform:uppercase;letter-spacing:.04em;position:relative;z-index:2;}
+  .glyph-stage{position:relative;width:min(320px,72vw);height:min(320px,72vw);margin:18px auto 6px;}
+  .glyph-stage svg{width:100%;height:100%;display:block;}
+  .poster-temp{
+    font-family:var(--display);font-size:clamp(72px,16vw,148px);line-height:.85;margin:6px 0 0;color:var(--ink);position:relative;z-index:2;
+  }
+  .poster-specs{
+    display:flex;flex-wrap:wrap;justify-content:center;gap:10px 26px;margin-top:22px;padding-top:20px;border-top:2.5px solid var(--ink);
+    font-size:13.5px;font-weight:600;position:relative;z-index:2;
+  }
+  .poster-specs b{font-family:var(--display);font-weight:400;font-size:15px;}
+  .star-btn{background:var(--card);border:2.5px solid var(--ink);cursor:pointer;color:var(--ink);width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;position:relative;z-index:2;vertical-align:middle;margin-left:10px;}
+  .star-btn.on{background:var(--pink);color:#fff;}
+  .star-btn svg{width:18px;height:18px;}
+
+  .stamps-head{font-family:var(--display);font-size:15px;text-transform:uppercase;margin:34px 0 16px;text-align:center;}
+  .stamps{display:flex;flex-wrap:wrap;gap:22px 16px;justify-content:center;}
+  .stamp{
+    position:relative;width:130px;background:var(--card);border-top:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);
+    border-left:2.5px dashed var(--ink);border-right:2.5px dashed var(--ink);
+    padding:14px 8px 12px;text-align:center;
+  }
+  .stamp::before,.stamp::after{
+    content:'';position:absolute;left:-2px;right:-2px;height:11px;
+    background-image:radial-gradient(circle, var(--stock) 3.4px, transparent 3.6px);
+    background-size:12px 12px;background-position:0 center;background-repeat:repeat-x;
+  }
+  .stamp::before{top:-6px;}
+  .stamp::after{bottom:-6px;}
+  .stamp:nth-child(odd){transform:rotate(-1.6deg);}
+  .stamp:nth-child(even){transform:rotate(1.4deg);}
+  .stamp .day{font-family:var(--display);font-size:12px;text-transform:uppercase;}
+  .stamp .date{font-size:11px;color:var(--ink-dim);font-weight:600;}
+  .stamp .sicon{width:44px;height:44px;margin:8px auto;}
+  .stamp .hi{font-family:var(--display);font-size:19px;}
+  .stamp .lo{font-size:12.5px;color:var(--ink-dim);font-weight:600;}
+  .stamp .pr{font-size:10px;font-weight:700;color:var(--blue);margin-top:6px;text-transform:uppercase;}
+
+  .skel{background:linear-gradient(90deg,#ded5bd,#f2ecdc,#ded5bd);background-size:200% 100%;animation:shimmer 1.4s infinite;}
+  @keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+  .skel-poster{height:420px;margin-top:28px;}
+  .skel-stamps{height:180px;margin-top:28px;}
+
+  .error-box{margin-top:28px;border:3px solid var(--ink);background:var(--card);padding:44px 20px;text-align:center;}
+  .error-box .bang{font-family:var(--display);font-size:64px;color:var(--pink);line-height:1;}
+  .error-box p{font-weight:600;margin:12px 0 20px;}
+  .retry-btn{border:2.5px solid var(--ink);background:var(--blue);color:#fff;font-weight:700;font-size:14px;padding:11px 26px;cursor:pointer;text-transform:uppercase;}
+
+  footer{font-size:12px;color:var(--ink-dim);padding:28px 0 0;text-align:center;font-weight:500;}
+  footer a{color:var(--ink);}
+
+  @media (max-width:600px){
+    .poster{padding:26px 14px 22px;}
+    .poster-specs{gap:8px 16px;}
+  }
+</style>
+</head>
+<body>
+  <svg id="grain" aria-hidden="true">
+    <filter id="grainFilter"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.35 0.35 0.35 0 0"/></filter>
+    <rect width="100%" height="100%" filter="url(#grainFilter)"/>
+  </svg>
+
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">WEATHER<span>·</span>RISO</div>
+      <div class="controls">
+        <div class="search-wrap">
+          <input id="searchInput" type="text" placeholder="SEARCH A CITY…" autocomplete="off" role="combobox"
+                 aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list" aria-label="Search for a city">
+          <ul id="searchResults" class="search-results" role="listbox" hidden></ul>
+        </div>
+        <button id="geoBtn" class="btn" title="Use my location" aria-label="Use my location">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </button>
+        <div class="seg" id="tempSeg"><button data-v="celsius">°C</button><button data-v="fahrenheit">°F</button></div>
+        <select id="windUnit" aria-label="Wind speed unit">
+          <option value="ms">M/S</option><option value="kmh">KM/H</option><option value="mph">MPH</option>
+        </select>
+      </div>
+    </header>
+
+    <div id="favoritesStrip" class="favorites-strip"></div>
+    <div id="banner" class="banner" hidden></div>
+
+    <main id="main">
+      <div id="posterArea"></div>
+      <p class="stamps-head">7-Day Forecast</p>
+      <div id="stampsArea"></div>
+    </main>
+
+    <footer>
+      Weather data — Open-Meteo (CC BY 4.0). Location search — Open-Meteo Geocoding. Reverse lookup — <a href="https://www.bigdatacloud.com/" target="_blank" rel="noopener">BigDataCloud</a>.
+    </footer>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var WX_KEYS = { favorites:'wx_favorites', lastCity:'wx_last_city', units:'wx_units' };
+
+  var WMO = {
+    0:['Clear sky','clear'],1:['Mainly clear','clear'],2:['Partly cloudy','partly-cloudy'],3:['Overcast','overcast'],
+    45:['Fog','fog'],48:['Rime fog','fog'],
+    51:['Light drizzle','drizzle'],53:['Drizzle','drizzle'],55:['Dense drizzle','drizzle'],
+    56:['Light freezing drizzle','drizzle'],57:['Freezing drizzle','drizzle'],
+    61:['Slight rain','rain'],63:['Rain','rain'],65:['Heavy rain','rain-heavy'],
+    66:['Light freezing rain','rain'],67:['Freezing rain','rain-heavy'],
+    71:['Slight snow','snow'],73:['Snow','snow'],75:['Heavy snow','snow-heavy'],77:['Snow grains','snow'],
+    80:['Rain showers','showers'],81:['Rain showers','showers'],82:['Violent showers','showers-heavy'],
+    85:['Snow showers','snow-showers'],86:['Heavy snow showers','snow-showers'],
+    95:['Thunderstorm','thunder'],96:['Thunderstorm, hail','thunder-hail'],99:['Severe thunderstorm','thunder-hail']
+  };
+  function wmoLabel(c){ return (WMO[c]||WMO[3])[0]; }
+  function wmoFamily(c){ return (WMO[c]||WMO[3])[1]; }
+
+  function debounce(fn, ms){
+    var t;
+    return function(){ var args=arguments, ctx=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(ctx,args); }, ms); };
+  }
+  function loadJSON(key, fallback){ try{ var v=JSON.parse(localStorage.getItem(key)); return v==null?fallback:v; }catch(e){ return fallback; } }
+  function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+  function formatResult(r){
+    var parts=[r.name];
+    if (r.admin1 && r.admin1!==r.name) parts.push(r.admin1);
+    if (r.country) parts.push(r.country);
+    return parts.join(', ');
+  }
+  function closeEnough(a,b){ return Math.abs(a.lat-b.lat)<0.01 && Math.abs(a.lon-b.lon)<0.01; }
+  function escapeHTML(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  var state = {
+    city:null,
+    units: loadJSON(WX_KEYS.units, {temp:'celsius', wind:'kmh'}),
+    favorites: loadJSON(WX_KEYS.favorites, []),
+    data:null
+  };
+
+  // ---------- riso duotone icons ----------
+  function circlePathD(cx,cy,r){ return 'M '+(cx-r)+','+cy+' a '+r+','+r+' 0 1,0 '+(r*2)+',0 a '+r+','+r+' 0 1,0 '+(-r*2)+',0 Z'; }
+  function crescentD(cx,cy,r){ return circlePathD(cx,cy,r)+' '+circlePathD(cx+r*0.5,cy-r*0.4,r*0.82); }
+  function cloudPrim(cx,cy,w){
+    var s=w/64;
+    return '<rect x="'+(cx-26*s)+'" y="'+(cy-4*s)+'" width="'+(52*s)+'" height="'+(22*s)+'" rx="'+(11*s)+'"/>'+
+      '<circle cx="'+(cx-13*s)+'" cy="'+(cy-6*s)+'" r="'+(13*s)+'"/>'+
+      '<circle cx="'+(cx+2*s)+'" cy="'+(cy-13*s)+'" r="'+(16*s)+'"/>'+
+      '<circle cx="'+(cx+18*s)+'" cy="'+(cy-5*s)+'" r="'+(11*s)+'"/>';
+  }
+  function sunPrim(cx,cy,r){
+    var out='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"/>';
+    for (var a=0;a<360;a+=30){
+      var rad=a*Math.PI/180, r1=r+6, r2=r+18, perp=rad+Math.PI/2, w=4.5;
+      var x1=cx+r1*Math.cos(rad), y1=cy+r1*Math.sin(rad), x2=cx+r2*Math.cos(rad), y2=cy+r2*Math.sin(rad);
+      var bx1=x1+w*Math.cos(perp), by1=y1+w*Math.sin(perp), bx2=x1-w*Math.cos(perp), by2=y1-w*Math.sin(perp);
+      out+='<polygon points="'+bx1.toFixed(1)+','+by1.toFixed(1)+' '+bx2.toFixed(1)+','+by2.toFixed(1)+' '+x2.toFixed(1)+','+y2.toFixed(1)+'"/>';
+    }
+    return out;
+  }
+  function ticksPrim(cx,cy,n,len){
+    var out='', startX=cx-((n-1)*13)/2;
+    for (var i=0;i<n;i++){ var x=startX+i*13, y0=cy+(i%2?6:0); out+='<rect x="'+(x-2.5)+'" y="'+y0+'" width="5" height="'+len+'" rx="2.5"/>'; }
+    return out;
+  }
+  function flakesPrim(cx,cy,n){
+    var out='', startX=cx-((n-1)*16)/2;
+    for (var i=0;i<n;i++){
+      var x=startX+i*16, y=cy+(i%2?6:0);
+      out+='<g>';
+      for (var a=0;a<180;a+=60){ var rad=a*Math.PI/180,r=7; out+='<rect x="'+(x-r)+'" y="'+(y-1.6)+'" width="'+(r*2)+'" height="3.2" rx="1.6" transform="rotate('+a+' '+x+' '+y+')"/>'; }
+      out+='</g>';
+    }
+    return out;
+  }
+  function boltPrim(cx,cy){
+    return '<polygon points="'+(cx+10)+','+(cy-16)+' '+(cx-9)+','+(cy+8)+' '+(cx+1)+','+(cy+8)+' '+(cx-6)+','+(cy+30)+' '+(cx+15)+','+(cy+2)+' '+(cx+4)+','+(cy+2)+'"/>';
+  }
+  function hailPrim(cx,cy){
+    return '<circle cx="'+(cx-15)+'" cy="'+cy+'" r="4"/><circle cx="'+cx+'" cy="'+(cy+7)+'" r="4"/><circle cx="'+(cx+15)+'" cy="'+cy+'" r="4"/>';
+  }
+  function fogPrim(cx,cy){
+    var out='', ys=[cy-8,cy+2,cy+12], ws=[46,56,38];
+    ys.forEach(function(y,i){ out+='<rect x="'+(cx-ws[i]/2)+'" y="'+(y-3)+'" width="'+ws[i]+'" height="6" rx="3"/>'; });
+    return out;
+  }
+  function glyphPrimitives(family, isDay){
+    switch(family){
+      case 'clear': return isDay? sunPrim(50,50,20) : '<path d="'+crescentD(50,50,24)+'" fill-rule="evenodd"/>';
+      case 'partly-cloudy': return '<g transform="translate(12,-8) scale(0.62)">'+(isDay?sunPrim(50,50,20):'<path d="'+crescentD(50,50,24)+'" fill-rule="evenodd"/>')+'</g>'+cloudPrim(55,64,58);
+      case 'overcast': return cloudPrim(50,54,68)+cloudPrim(38,68,44);
+      case 'fog': return cloudPrim(50,40,54)+fogPrim(50,80);
+      case 'drizzle': return cloudPrim(50,48,58)+ticksPrim(50,80,3,10);
+      case 'rain': return cloudPrim(50,46,60)+ticksPrim(50,80,4,16);
+      case 'rain-heavy': return cloudPrim(50,44,66)+ticksPrim(50,82,5,20);
+      case 'snow': return cloudPrim(50,46,58)+flakesPrim(50,84,3);
+      case 'snow-heavy': return cloudPrim(50,44,66)+flakesPrim(50,86,4);
+      case 'showers': return '<g transform="translate(14,-10) scale(0.55)">'+(isDay?sunPrim(50,50,20):'<path d="'+crescentD(50,50,24)+'" fill-rule="evenodd"/>')+'</g>'+cloudPrim(55,62,54)+ticksPrim(55,84,3,14);
+      case 'showers-heavy': return '<g transform="translate(14,-10) scale(0.55)">'+(isDay?sunPrim(50,50,20):'<path d="'+crescentD(50,50,24)+'" fill-rule="evenodd"/>')+'</g>'+cloudPrim(55,60,56)+ticksPrim(55,86,4,18);
+      case 'snow-showers': return '<g transform="translate(14,-10) scale(0.55)">'+(isDay?sunPrim(50,50,20):'<path d="'+crescentD(50,50,24)+'" fill-rule="evenodd"/>')+'</g>'+cloudPrim(55,62,54)+flakesPrim(55,86,3);
+      case 'thunder': return cloudPrim(50,42,62)+boltPrim(48,52);
+      case 'thunder-hail': return cloudPrim(50,40,64)+boltPrim(48,50)+hailPrim(50,92);
+      default: return sunPrim(50,50,20);
+    }
+  }
+  function duotoneIcon(code, isDay, size){
+    var fam = wmoFamily(code);
+    var prims = glyphPrimitives(fam, isDay);
+    return '<svg viewBox="0 0 100 100" width="'+size+'" height="'+size+'" aria-hidden="true" fill-rule="evenodd">'+
+      '<g transform="translate(4,3)" fill="'+cssBlue()+'" style="mix-blend-mode:multiply">'+prims+'</g>'+
+      '<g fill="'+cssPink()+'" style="mix-blend-mode:multiply">'+prims+'</g>'+
+      '</svg>';
+  }
+  function cssBlue(){ return '#123FEB'; }
+  function cssPink(){ return '#F72D95'; }
+
+  // ---------- units ----------
+  function cToF(c){ return c*9/5+32; }
+  function convTemp(c){ return state.units.temp==='fahrenheit' ? cToF(c) : c; }
+  function tempStr(c){ if (c==null||isNaN(c)) return '—'; return Math.round(convTemp(c))+'°'; }
+  function convWind(ms){
+    if (state.units.wind==='kmh') return ms*3.6;
+    if (state.units.wind==='mph') return ms*2.236936;
+    return ms;
+  }
+  function windUnitLabel(){ return state.units.wind==='kmh'?'km/h':(state.units.wind==='mph'?'mph':'m/s'); }
+  function windStr(ms){ return Math.round(convWind(ms))+' '+windUnitLabel(); }
+  function windDir(deg){
+    var dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(deg/22.5)%16];
+  }
+
+  // ---------- geocoding / geolocation ----------
+  var searchAbort=null, searchResultsData=[], activeResultIndex=-1;
+  var searchInput=document.getElementById('searchInput');
+  var resultsEl=document.getElementById('searchResults');
+
+  var doSearch = debounce(function(q){
+    q=q.trim();
+    if (q.length<2){ closeResults(); return; }
+    if (searchAbort) searchAbort.abort();
+    searchAbort=new AbortController();
+    fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=8&language=en&format=json', {signal:searchAbort.signal})
+      .then(function(r){ return r.json(); })
+      .then(function(json){ searchResultsData=json.results||[]; renderResults(false); })
+      .catch(function(e){ if (e.name!=='AbortError'){ searchResultsData=[]; renderResults(true); } });
+  }, 250);
+
+  searchInput.addEventListener('input', function(e){ activeResultIndex=-1; doSearch(e.target.value); });
+  searchInput.addEventListener('keydown', function(e){
+    if (resultsEl.hidden) return;
+    if (e.key==='ArrowDown'){ e.preventDefault(); activeResultIndex=Math.min(activeResultIndex+1, searchResultsData.length-1); highlightActive(); }
+    else if (e.key==='ArrowUp'){ e.preventDefault(); activeResultIndex=Math.max(activeResultIndex-1,0); highlightActive(); }
+    else if (e.key==='Enter'){ e.preventDefault(); if (activeResultIndex>=0) pickResult(searchResultsData[activeResultIndex]); }
+    else if (e.key==='Escape'){ closeResults(); }
+  });
+  document.addEventListener('click', function(e){ if (!e.target.closest('.search-wrap')) closeResults(); });
+
+  function renderResults(errorState){
+    if (errorState){ resultsEl.innerHTML='<li class="sr-empty">Search failed — try again.</li>'; resultsEl.hidden=false; return; }
+    if (!searchResultsData.length){ resultsEl.innerHTML='<li class="sr-empty">No matches.</li>'; resultsEl.hidden=false; return; }
+    resultsEl.innerHTML = searchResultsData.map(function(r,i){
+      return '<li role="option" id="sr-'+i+'" data-i="'+i+'" class="sr-item">'+escapeHTML(formatResult(r))+'</li>';
+    }).join('');
+    resultsEl.hidden=false;
+    searchInput.setAttribute('aria-expanded','true');
+    Array.prototype.forEach.call(resultsEl.children, function(li){
+      li.addEventListener('mousedown', function(e){ e.preventDefault(); pickResult(searchResultsData[+li.dataset.i]); });
+    });
+  }
+  function highlightActive(){
+    Array.prototype.forEach.call(resultsEl.children, function(li,i){ li.classList.toggle('active', i===activeResultIndex); });
+    var el=resultsEl.children[activeResultIndex];
+    if (el){ el.scrollIntoView({block:'nearest'}); searchInput.setAttribute('aria-activedescendant','sr-'+activeResultIndex); }
+  }
+  function closeResults(){ resultsEl.hidden=true; resultsEl.innerHTML=''; activeResultIndex=-1; searchInput.setAttribute('aria-expanded','false'); }
+  function pickResult(r){
+    closeResults(); searchInput.value='';
+    selectCity({lat:r.latitude, lon:r.longitude, name:r.name, admin1:r.admin1||'', country:r.country||''});
+  }
+
+  function reverseGeocode(lat, lon){
+    return fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+lat+'&longitude='+lon+'&localityLanguage=en')
+      .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
+      .then(function(d){
+        var name=d.city||d.locality||d.principalSubdivision||(lat.toFixed(2)+', '+lon.toFixed(2));
+        return {lat:lat, lon:lon, name:name, admin1:d.principalSubdivision||'', country:d.countryName||''};
+      })
+      .catch(function(){ return {lat:lat, lon:lon, name:'Current location ('+lat.toFixed(2)+', '+lon.toFixed(2)+')', admin1:'', country:''}; });
+  }
+
+  document.getElementById('geoBtn').addEventListener('click', function(){
+    if (!navigator.geolocation){ showBanner("Geolocation isn't available in this browser.", true); return; }
+    showBanner('Finding your location…', false);
+    navigator.geolocation.getCurrentPosition(function(pos){
+      hideBanner();
+      reverseGeocode(pos.coords.latitude, pos.coords.longitude).then(selectCity);
+    }, function(err){
+      if (err.code===err.PERMISSION_DENIED) showBanner('Location permission denied — search for your city instead.', true);
+      else showBanner("Couldn't get your location — search for your city instead.", true);
+    }, {timeout:10000});
+  });
+
+  function updateURL(city){
+    var url=new URL(window.location.href);
+    url.searchParams.set('lat', city.lat.toFixed(4));
+    url.searchParams.set('lon', city.lon.toFixed(4));
+    url.searchParams.set('name', city.name);
+    if (city.admin1) url.searchParams.set('admin1', city.admin1); else url.searchParams.delete('admin1');
+    if (city.country) url.searchParams.set('country', city.country); else url.searchParams.delete('country');
+    history.replaceState(null, '', url.toString());
+  }
+  function isFavorite(city){ return state.favorites.some(function(f){ return closeEnough(f,city); }); }
+  function toggleFavorite(){
+    if (!state.city) return;
+    if (isFavorite(state.city)) state.favorites=state.favorites.filter(function(f){ return !closeEnough(f,state.city); });
+    else state.favorites.push(state.city);
+    saveJSON(WX_KEYS.favorites, state.favorites);
+    renderFavoritesStrip();
+    renderPoster();
+  }
+  function renderFavoritesStrip(){
+    var el=document.getElementById('favoritesStrip');
+    if (!state.favorites.length){ el.innerHTML=''; return; }
+    el.innerHTML = state.favorites.map(function(f){
+      var cur=state.city && closeEnough(f,state.city);
+      return '<button class="fav-chip'+(cur?' current':'')+'" data-lat="'+f.lat+'" data-lon="'+f.lon+'">'+escapeHTML(f.name)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(el.children, function(btn,i){ btn.addEventListener('click', function(){ selectCity(state.favorites[i]); }); });
+  }
+  function showBanner(msg, dismissible){
+    var el=document.getElementById('banner');
+    el.innerHTML='<span>'+escapeHTML(msg)+'</span>'+(dismissible?'<button aria-label="Dismiss">×</button>':'');
+    el.hidden=false;
+    if (dismissible) el.querySelector('button').addEventListener('click', hideBanner);
+  }
+  function hideBanner(){ document.getElementById('banner').hidden=true; }
+
+  function toLocalMs(str){ return Date.parse(str+'Z'); }
+  function fmtDayAbbr(str){ var dt=new Date(toLocalMs(str)); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getUTCDay()]; }
+  function fmtDateShort(str){ var dt=new Date(toLocalMs(str)); return (dt.getUTCMonth()+1)+'/'+dt.getUTCDate(); }
+
+  // ---------- poster ----------
+  function renderPoster(){
+    var el=document.getElementById('posterArea');
+    var d=state.data;
+    if (!d){ el.innerHTML='<div class="skel skel-poster"></div>'; return; }
+    var c=d.current;
+    var fav=isFavorite(state.city);
+    el.innerHTML =
+      '<div class="poster">'+
+        '<h1 class="poster-place">'+escapeHTML(state.city.name)+
+          '<button class="star-btn'+(fav?' on':'')+'" id="favToggle" aria-label="'+(fav?'Remove from favourites':'Save as favourite')+'" aria-pressed="'+fav+'">'+
+          '<svg viewBox="0 0 24 24" fill="'+(fav?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7-5.4-4.7 7.1-.6z"/></svg>'+
+          '</button>'+
+        '</h1>'+
+        '<div class="poster-sub">'+escapeHTML((state.city.admin1?state.city.admin1+', ':'')+(state.city.country||''))+' — '+wmoLabel(c.weather_code)+'</div>'+
+        '<div class="glyph-stage">'+duotoneIcon(c.weather_code, c.is_day===1, 320)+'</div>'+
+        '<div class="poster-temp">'+tempStr(c.temperature_2m)+'</div>'+
+        '<div class="poster-specs">'+
+          '<span>FEELS <b>'+tempStr(c.apparent_temperature)+'</b></span>'+
+          '<span>HUMIDITY <b>'+Math.round(c.relative_humidity_2m)+'%</b></span>'+
+          '<span>WIND <b>'+windStr(c.wind_speed_10m)+'</b> '+windDir(c.wind_direction_10m)+'</span>'+
+          '<span>PRECIP <b>'+(c.precipitation||0)+'mm</b></span>'+
+        '</div>'+
+      '</div>';
+    document.getElementById('favToggle').addEventListener('click', toggleFavorite);
+  }
+  function renderStamps(){
+    var el=document.getElementById('stampsArea');
+    var d=state.data;
+    if (!d){ el.innerHTML='<div class="skel skel-stamps"></div>'; return; }
+    var daily=d.daily;
+    var cells = daily.time.map(function(t,i){
+      return '<div class="stamp">'+
+        '<div class="day">'+(i===0?'Today':fmtDayAbbr(t))+'</div>'+
+        '<div class="date">'+fmtDateShort(t)+'</div>'+
+        duotoneIcon(daily.weather_code[i], true, 44).replace('<svg ','<svg class="sicon" ')+
+        '<div class="hi">'+tempStr(daily.temperature_2m_max[i])+'</div>'+
+        '<div class="lo">'+tempStr(daily.temperature_2m_min[i])+'</div>'+
+        '<div class="pr">'+(daily.precipitation_probability_max[i]||0)+'% RAIN</div>'+
+        '</div>';
+    }).join('');
+    el.innerHTML = '<div class="stamps">'+cells+'</div>';
+  }
+
+  // ---------- fetch / errors ----------
+  function showError(msg, retry){
+    document.getElementById('posterArea').innerHTML='<div class="error-box"><div class="bang">!</div><p>'+escapeHTML(msg)+'</p><button class="retry-btn" id="retryBtn">Retry</button></div>';
+    document.getElementById('stampsArea').innerHTML='';
+    document.getElementById('retryBtn').addEventListener('click', retry);
+  }
+  function showSkeleton(){
+    document.getElementById('posterArea').innerHTML='<div class="skel skel-poster"></div>';
+    document.getElementById('stampsArea').innerHTML='<div class="skel skel-stamps"></div>';
+  }
+  function renderAll(){ renderPoster(); renderStamps(); }
+
+  function loadForecast(){
+    showSkeleton();
+    var url='https://api.open-meteo.com/v1/forecast?latitude='+state.city.lat+'&longitude='+state.city.lon+
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day,precipitation'+
+      '&hourly=temperature_2m,precipitation_probability,weather_code'+
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max'+
+      '&timezone=auto&forecast_days=7&temperature_unit=celsius&wind_speed_unit=ms';
+    fetch(url).then(function(res){
+      if (!res.ok) throw new Error('the weather service returned an error');
+      return res.json();
+    }).then(function(data){ state.data=data; renderAll(); })
+    .catch(function(e){ showError("Couldn't load the forecast — "+(e&&e.message?e.message:'network error')+'.', loadForecast); });
+  }
+
+  function selectCity(city){
+    state.city=city;
+    saveJSON(WX_KEYS.lastCity, city);
+    updateURL(city);
+    renderFavoritesStrip();
+    hideBanner();
+    document.title=city.name+' — Riso Weather';
+    loadForecast();
+  }
+
+  function applyUnitButtons(){
+    Array.prototype.forEach.call(document.querySelectorAll('#tempSeg button'), function(b){ b.classList.toggle('on', b.dataset.v===state.units.temp); });
+    document.getElementById('windUnit').value=state.units.wind;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#tempSeg button'), function(b){
+    b.addEventListener('click', function(){
+      state.units.temp=b.dataset.v; saveJSON(WX_KEYS.units, state.units); applyUnitButtons();
+      if (state.data) renderAll();
+    });
+  });
+  document.getElementById('windUnit').addEventListener('change', function(e){
+    state.units.wind=e.target.value; saveJSON(WX_KEYS.units, state.units);
+    if (state.data) renderAll();
+  });
+
+  function fallbackDefault(){
+    var city={lat:51.5074, lon:-0.1278, name:'London', admin1:'England', country:'United Kingdom'};
+    selectCity(city);
+    showBanner('Showing London — search for your city or use the location button above.', true);
+  }
+  function init(){
+    applyUnitButtons();
+    renderFavoritesStrip();
+    var params=new URLSearchParams(location.search);
+    var qLat=parseFloat(params.get('lat')), qLon=parseFloat(params.get('lon')), qName=params.get('name');
+    if (!isNaN(qLat) && !isNaN(qLon) && qName){
+      selectCity({lat:qLat, lon:qLon, name:qName, admin1:params.get('admin1')||'', country:params.get('country')||''});
+      return;
+    }
+    var last=loadJSON(WX_KEYS.lastCity, null);
+    if (last && typeof last.lat==='number'){ selectCity(last); return; }
+    if (navigator.geolocation){
+      showBanner('Finding your location…', false);
+      var settled=false;
+      navigator.geolocation.getCurrentPosition(function(pos){
+        settled=true; hideBanner();
+        reverseGeocode(pos.coords.latitude, pos.coords.longitude).then(selectCity);
+      }, function(){ if (!settled){ settled=true; fallbackDefault(); } }, {timeout:8000});
+    } else { fallbackDefault(); }
+  }
+  init();
+})();
+</script>
+</body>
+</html>

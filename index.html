@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather — Three Designs</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Archivo+Black&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15171B;
+    --card:#1D2025;
+    --text:#F3F3EF;
+    --text-dim:#9A9DA3;
+    --rule:#2B2F35;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',ui-sans-serif,system-ui,sans-serif;}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important;scroll-behavior:auto !important;}
+  }
+  a{color:inherit;}
+  :focus-visible{outline:3px solid #fff;outline-offset:3px;border-radius:4px;}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:64px 24px 48px;}
+  h1{font-weight:200;font-size:clamp(32px,6vw,54px);margin:0 0 12px;letter-spacing:-.01em;}
+  .intro{color:var(--text-dim);font-size:16px;max-width:640px;line-height:1.6;margin:0 0 8px;}
+  .intro b{color:var(--text);font-weight:500;}
+  .shared-note{color:var(--text-dim);font-size:13.5px;margin:20px 0 48px;padding:12px 16px;border:1px solid var(--rule);border-radius:10px;display:inline-block;}
+  .shared-note b{color:var(--text);}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;max-width:480px;margin:0 auto;}}
+
+  .card{
+    background:var(--card);border:1px solid var(--rule);border-radius:16px;overflow:hidden;
+    display:flex;flex-direction:column;text-decoration:none;color:var(--text);
+    transition:transform .18s ease, border-color .18s ease;
+  }
+  .card:hover{transform:translateY(-4px);border-color:#454b54;}
+  .preview{height:200px;position:relative;overflow:hidden;}
+  .card-body{padding:20px 22px 24px;}
+  .card-body h2{font-size:19px;margin:0 0 8px;font-weight:600;}
+  .card-body p{font-size:14px;color:var(--text-dim);line-height:1.55;margin:0 0 16px;}
+  .open-link{font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+  .open-link svg{width:14px;height:14px;}
+
+  /* ---------- Aurora preview ---------- */
+  .p-aurora{background:linear-gradient(180deg,#3a7dd8,#0f1638 130%);}
+  .p-aurora .num{position:absolute;left:16px;bottom:8px;font-family:'Inter';font-weight:100;font-size:64px;color:#fff;}
+  .p-aurora svg{position:absolute;inset:0;width:100%;height:100%;}
+  .p-aurora .dot{position:absolute;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6d8,#ffd166 70%);top:22px;right:26px;box-shadow:0 0 18px 4px rgba(255,209,102,.5);}
+
+  /* ---------- Station preview ---------- */
+  .p-station{background:#EEF0EA;}
+  .p-station .ruler{height:10px;background-image:repeating-linear-gradient(to right,#aab3a5 0 1px,transparent 1px 32px),repeating-linear-gradient(to right,#CDD3C7 0 1px,transparent 1px 8px);background-size:32px 8px,8px 5px;}
+  .p-station .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;height:calc(100% - 10px);}
+  .p-station .cell{border-right:1px solid #CDD3C7;border-bottom:1px solid #CDD3C7;padding:8px;font-family:'IBM Plex Mono',monospace;color:#12202E;}
+  .p-station .cell:last-child{border-right:none;}
+  .p-station .lbl{font-size:8px;color:#5B6670;letter-spacing:.08em;text-transform:uppercase;}
+  .p-station .val{font-size:20px;line-height:1.3;}
+  .p-station .accent{color:#D6301F;}
+
+  /* ---------- Riso preview ---------- */
+  .p-riso{background:#EAE2D0;}
+  .p-riso .grain{position:absolute;inset:0;opacity:.5;}
+  .p-riso .glyph{position:absolute;width:84px;height:84px;left:20px;top:50%;transform:translateY(-50%);}
+  .p-riso .word{position:absolute;right:16px;top:50%;transform:translateY(-50%);text-align:right;font-family:'Archivo Black';font-size:26px;line-height:1.05;color:#1A1A17;}
+  .p-riso .word span{display:block;font-family:'Space Grotesk';font-size:11px;font-weight:600;color:#6b6558;margin-top:6px;}
+
+  footer{color:var(--text-dim);font-size:12.5px;text-align:center;padding:32px 24px 48px;}
+  footer a{text-decoration:underline;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Weather, three ways.</h1>
+    <p class="intro">Same city search, same forecast data, three completely different design languages — <b>Aurora</b> is atmospheric, <b>Station</b> is a data instrument, <b>Riso</b> is a print poster. Pick whichever fits your mood.</p>
+    <div class="shared-note">Your searched city, favourites and unit preferences are shared across all three — stored locally in your browser, so switching designs keeps your place.</div>
+
+    <div class="grid">
+      <a class="card" href="aurora.html">
+        <div class="preview p-aurora">
+          <div class="dot"></div>
+          <svg viewBox="0 0 280 200" preserveAspectRatio="none"><path d="M0,140 C40,150 60,110 90,100 C130,88 150,60 190,50 C220,42 250,55 280,48" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="3"/></svg>
+          <div class="num">18°</div>
+        </div>
+        <div class="card-body">
+          <h2>Aurora</h2>
+          <p>Full-bleed sky gradient that shifts with the city's own sunrise and sunset, an ultralight hero numeral, and a draggable 24-hour temperature curve.</p>
+          <span class="open-link">Open Aurora <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </div>
+      </a>
+
+      <a class="card" href="station.html">
+        <div class="preview p-station">
+          <div class="ruler"></div>
+          <div class="grid3">
+            <div class="cell"><div class="lbl">Temp</div><div class="val">21°</div></div>
+            <div class="cell"><div class="lbl">Wind</div><div class="val">14<span style="font-size:11px">km/h</span></div></div>
+            <div class="cell"><div class="lbl">Precip</div><div class="val accent">64%</div></div>
+          </div>
+        </div>
+        <div class="card-body">
+          <h2>Station</h2>
+          <p>A meteorological instrument panel — IBM Plex Mono readouts, an 8px grid, and a proper labelled meteogram with gridlines and axes.</p>
+          <span class="open-link">Open Station <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </div>
+      </a>
+
+      <a class="card" href="riso.html">
+        <div class="preview p-riso">
+          <svg class="grain" aria-hidden="true"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.3 0.3 0.3 0 0"/></filter><rect width="100%" height="100%" filter="url(#g)"/></svg>
+          <svg class="glyph" viewBox="0 0 100 100"><g transform="translate(4,3)" fill="#123FEB" style="mix-blend-mode:multiply"><circle cx="50" cy="50" r="20"/></g><g fill="#F72D95" style="mix-blend-mode:multiply"><circle cx="50" cy="50" r="20"/></g></svg>
+          <div class="word">RISO<span>PRINT POSTER</span></div>
+        </div>
+        <div class="card-body">
+          <h2>Riso</h2>
+          <p>Risograph print poster energy — overprinting blue and pink inks, paper grain, chunky display type, and the week stacked as stamp cards.</p>
+          <span class="open-link">Open Riso <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0). Location search via Open-Meteo Geocoding. Reverse lookup via <a href="https://www.bigdatacloud.com/" target="_blank" rel="noopener">BigDataCloud</a>.
+  </footer>
+</body>
+</html>
